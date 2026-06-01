@@ -1,0 +1,17 @@
+@using EventEase_Copilot_Blazor.Models
+
+<div class="event-card">
+    <h3>@Event.EventName</h3>
+    <p><strong>Date:</strong> @Event.EventDate.ToString("MMMM dd, yyyy")</p>
+    <p><strong>Location:</strong> @Event.Location</p>
+    <div class="button-row">
+        <a class="btn" href="/events/@Event.Id">View Details</a>
+        <a class="btn success" href="/register/@Event.Id">Register</a>
+    </div>
+    <p class="author-line">Written by Brian McCarthy</p>
+</div>
+
+@code {
+    [Parameter]
+    public EventModel Event { get; set; } = new();
+}
