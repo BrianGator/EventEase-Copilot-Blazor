@@ -1,0 +1,32 @@
+@page "/"
+@using EventEase_Copilot_Blazor.Models
+@using EventEase_Copilot_Blazor.Services
+@inject EventService EventService
+
+<NavMenu />
+
+<h1>EventEase Events</h1>
+<p>Browse upcoming corporate and social events.</p>
+
+@if (events.Count == 0)
+{
+    <p>No events are available.</p>
+}
+else
+{
+    @foreach (var item in events)
+    {
+        <EventCard Event="item" @key="item.Id" />
+    }
+}
+
+<p class="author-line">Written by Brian McCarthy</p>
+
+@code {
+    private List<EventModel> events = new();
+
+    protected override void OnInitialized()
+    {
+        events = EventService.GetEvents();
+    }
+}
