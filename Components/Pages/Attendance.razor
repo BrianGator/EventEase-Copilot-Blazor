@@ -1,0 +1,56 @@
+@page "/attendance"
+@using EventEase_Copilot_Blazor.Models
+@using EventEase_Copilot_Blazor.Services
+@inject AttendanceService AttendanceService
+@inject SessionService SessionService
+
+<NavMenu />
+
+<h1>Attendance Tracker</h1>
+
+@if (SessionService.HasUser)
+{
+    <div class="info-box">
+        Current session user: @SessionService.CurrentUserName (@SessionService.CurrentUserEmail)
+    </div>
+}
+
+@if (records.Count == 0)
+{
+    <p>No attendance records have been created yet.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Event</th>
+                <th>Attendee</th>
+                <th>Email</th>
+                <th>Registration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in records)
+            {
+                <tr @key="record.AttendeeEmail + record.EventId">
+                    <td>@record.EventName</td>
+                    <td>@record.AttendeeName</td>
+                    <td>@record.AttendeeEmail</td>
+                    <td>@record.RegistrationDate.ToString("g")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<p class="author-line">Written by Brian McCarthy</p>
+
+@code {
+    private List<AttendanceRecord> records = new();
+
+    protected override void OnInitialized()
+    {
+        records = AttendanceService.GetRecords();
+    }
+}
