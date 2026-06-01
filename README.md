@@ -26,17 +26,17 @@ This project covers three activities:
 - Razor
 - HTML
 - CSS
+- YAML
 
 ## Technologies Used
 
 - Blazor
 - .NET 8
 - Razor Components
-- Bootstrap-style CSS structure
 - Dependency Injection
-- Data Annotations Validation
-- GitHub
+- GitHub Actions
 - Microsoft Copilot
+- GitHub
 
 ## Methodologies Used
 
@@ -44,12 +44,13 @@ This project covers three activities:
 - Object-oriented programming
 - Separation of concerns
 - Service-based architecture
-- Form validation using data annotations
+- Manual form validation
 - State management using scoped services
 - Mock-data-driven development
 - Defensive programming
 - Routing validation and error handling
 - Performance optimization using Blazor `@key`
+- Continuous integration with GitHub Actions
 
 ## Requirements
 
@@ -72,7 +73,6 @@ EventEase-Copilot-Blazor/
 │   ├── EventCard.razor
 │   │
 │   ├── Layout/
-│   │   ├── MainLayout.razor
 │   │   └── NavMenu.razor
 │   │
 │   └── Pages/
@@ -84,7 +84,7 @@ EventEase-Copilot-Blazor/
 │
 ├── Models/
 │   ├── EventModel.cs
-│   ├── RegistrationModel.cs
+│   ├── RegistrationInfo.cs
 │   └── AttendanceRecord.cs
 │
 ├── Services/
@@ -94,6 +94,9 @@ EventEase-Copilot-Blazor/
 │
 ├── wwwroot/
 │   └── app.css
+│
+├── .github/workflows/
+│   └── dotnet-build.yml
 │
 ├── EventEase-Copilot-Blazor.csproj
 ├── Program.cs
@@ -149,7 +152,7 @@ Users can open a details page for each event. The details page displays the even
 
 ### Registration Form
 
-Users can register for an event using a form that validates name, email, and phone number.
+Users can register for an event using a form that validates name, email, and phone number before the app records attendance.
 
 ### User Session Tracking
 
@@ -167,6 +170,10 @@ Invalid pages are handled gracefully using a custom NotFound component.
 
 The event list uses the Blazor `@key` directive to help Blazor track rendered elements efficiently when lists grow or change.
 
+### Build Automation
+
+The repository includes a GitHub Actions workflow that restores dependencies and builds the .NET project on push and pull request events.
+
 ## Code Examples
 
 ### Event Card Component
@@ -178,8 +185,11 @@ The event list uses the Blazor `@key` directive to help Blazor track rendered el
     <h3>@Event.EventName</h3>
     <p><strong>Date:</strong> @Event.EventDate.ToString("MMMM dd, yyyy")</p>
     <p><strong>Location:</strong> @Event.Location</p>
-    <a class="btn" href="/events/@Event.Id">View Details</a>
-    <a class="btn success" href="/register/@Event.Id">Register</a>
+    <div class="button-row">
+        <a class="btn" href="/events/@Event.Id">View Details</a>
+        <a class="btn success" href="/register/@Event.Id">Register</a>
+    </div>
+    <p class="author-line">Written by Brian McCarthy</p>
 </div>
 
 @code {
@@ -188,22 +198,32 @@ The event list uses the Blazor `@key` directive to help Blazor track rendered el
 }
 ```
 
-### Registration Validation Model
+### Registration Model
 
 ```csharp
-using System.ComponentModel.DataAnnotations;
-
-public class RegistrationModel
+public class RegistrationInfo
 {
-    [Required(ErrorMessage = "Name is required.")]
     public string Name { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Email is required.")]
-    [EmailAddress(ErrorMessage = "Enter a valid email address.")]
     public string Email { get; set; } = string.Empty;
+    public string ContactNumber { get; set; } = string.Empty;
+}
+```
 
-    [Required(ErrorMessage = "Phone number is required.")]
-    public string PhoneNumber { get; set; } = string.Empty;
+### Registration Validation Logic
+
+```csharp
+if (string.IsNullOrWhiteSpace(registration.Name) ||
+    string.IsNullOrWhiteSpace(registration.Email) ||
+    string.IsNullOrWhiteSpace(registration.ContactNumber))
+{
+    errorMessage = "Please complete all registration fields.";
+    return;
+}
+
+if (!registration.Email.Contains('@'))
+{
+    errorMessage = "Please enter a valid email address.";
+    return;
 }
 ```
 
@@ -212,39 +232,39 @@ public class RegistrationModel
 ```csharp
 public class AttendanceService
 {
-    private readonly List<AttendanceRecord> attendanceRecords = new();
+    private readonly List<AttendanceRecord> records = new();
 
-    public void AddAttendance(AttendanceRecord record)
+    public void AddRecord(AttendanceRecord record)
     {
-        attendanceRecords.Add(record);
+        records.Add(record);
     }
 
-    public List<AttendanceRecord> GetAttendanceRecords()
+    public List<AttendanceRecord> GetRecords()
     {
-        return attendanceRecords;
+        return records;
     }
 }
 ```
 
 ## How the Code Works
 
-The application uses Blazor components to separate the user interface into reusable parts. The `EventCard` component receives an `EventModel` object as a parameter and displays the event information dynamically.
+The application uses Blazor components to separate the user interface into reusable parts. The `EventCard` component receives an `EventModel` object as a parameter and displays event information dynamically.
 
 The `EventService` stores mock event data and provides methods to retrieve all events or find one event by ID. This keeps event data logic separate from the page components.
 
-The `Register` page uses an `EditForm` connected to a `RegistrationModel`. Data annotations validate user input before a registration is accepted. When the form is valid, the app saves the user session through `SessionService` and adds an attendance record through `AttendanceService`.
+The `Register` page uses an `EditForm` connected to a `RegistrationInfo` model. The page checks for empty fields and validates that the email contains an `@` symbol before accepting the registration. When the form is valid, the app saves the user session through `SessionService` and adds an attendance record through `AttendanceService`.
 
 The `Attendance` page reads saved attendance records and displays them in a table. The `SessionService` shows the current registered user, demonstrating basic state management.
 
 Routing is handled by `Routes.razor`. Valid pages render normally, while invalid URLs display the custom `NotFound` page. This prevents the application from failing when users navigate to missing routes.
 
-The main layout includes a footer with the text **Written by Brian McCarthy**, so the attribution appears on every page of the website.
+Each page and the Event Card component include **Written by Brian McCarthy**, so the attribution appears throughout the website.
 
 ## Microsoft Copilot Assistance Summary
 
 Microsoft Copilot assisted with generating the foundational Event Card component, including fields for event name, date, and location. It helped suggest Blazor binding syntax, routing paths, component parameters, and mock data structure.
 
-During debugging and optimization, Copilot helped identify missing validation, invalid route handling, and performance concerns in event rendering. The code was improved with data annotations, a custom NotFound page, null checks, and the `@key` directive.
+During debugging and optimization, Copilot helped identify missing validation, invalid route handling, and performance concerns in event rendering. The code was improved with validation checks, a custom NotFound page, null checks, and the `@key` directive.
 
 For the final activity, Copilot helped design the Registration Form, SessionService, and AttendanceService. It also supported organizing the project into models, services, pages, and reusable components for cleaner maintainability and deployment readiness.
 
