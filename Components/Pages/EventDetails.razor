@@ -1,0 +1,39 @@
+@page "/events/{Id:int}"
+@using EventEase_Copilot_Blazor.Models
+@using EventEase_Copilot_Blazor.Services
+@inject EventService EventService
+
+<NavMenu />
+
+<h1>Event Details</h1>
+
+@if (eventItem is null)
+{
+    <div class="alert">Event not found.</div>
+    <a class="btn" href="/">Back to Events</a>
+}
+else
+{
+    <section class="detail-card">
+        <h2>@eventItem.EventName</h2>
+        <p><strong>Date:</strong> @eventItem.EventDate.ToString("MMMM dd, yyyy")</p>
+        <p><strong>Location:</strong> @eventItem.Location</p>
+        <p><strong>Description:</strong> @eventItem.Description</p>
+        <a class="btn success" href="/register/@eventItem.Id">Register</a>
+        <a class="btn" href="/">Back to Events</a>
+    </section>
+}
+
+<p class="author-line">Written by Brian McCarthy</p>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private EventModel? eventItem;
+
+    protected override void OnParametersSet()
+    {
+        eventItem = EventService.GetEventById(Id);
+    }
+}
